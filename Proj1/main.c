@@ -4,83 +4,118 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <dirent.h>
+#include <stdbool.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include "utilities.h"
+#include <time.h>
+
 #define BUFFER_SIZE 256
 
-int outfile_function(char *readFile, char *writeFile)
-{
-    FILE *fp1;
-    FILE *fp2;
-    char c;
-
-    fp1 = fopen(readFile, "r");
-    if (fp1 == NULL)
-    {
-        printf("Cannot open file :%s\n", readFile);
-        exit(0);
-    }
-    fp2 = fopen(writeFile, "w");
-
-    if (fp2 == NULL)
-    {
-        printf("Cannot open file :%s\n", writeFile);
-        exit(0);
-    }
-
-    c = fgetc(fp1);
-
-    while (c != EOF)
-    {
-        fputc(c, fp2);
-        c = fgetc(fp1);
-    }
-
-    fclose(fp1);
-    fclose(fp2);
-
-    return 0;
-}
-
-int main(int argc, char **argv, char **env)
+int main(int argc, char **argv, char **envp)
 {
     //Read input from one file, and copy to another!
-    outfile_function("f1.txt", "f2.txt");
-
     int option = 0;
-    // bool rFlag = false;
+    bool rFlag = false;
     DIR *d;
     struct dirent *dir;
-    // bool hFlag = false, mda5Flag = false, 1Flag = false, 256Flag = false;
-    // bool oFlag = false, outfileFlag = false;
-    // bool vFlag = false;
-    // bool filedirFlag = false;
+    bool hFlag = false;
+    bool dFlag = false;
+    //bool mda5Flag = false, m1Flag = false, m256Flag = false;
+    bool oFlag = false;
+    bool vFlag = false;
+    char *inputFile = argv[argc - 1];
+    char *outputFile = NULL;
 
-    while ((option = getopt(argc, argv, "rh:m12:o:f:vd")) != -1)
+    printf("\n--------------Environment Variables-------------------\n");
+    char **env;
+    for (env = envp; *env != 0; env++)
+    {
+        char *thisEnv = *env;
+        printf(" %s\n", thisEnv);
+    }
+
+    printf("\n----------------Options--------------------\n");
+    while ((option = getopt(argc, argv, "rh:m,1,2o:f:vd")) != -1)
     {
         switch (option)
         {
-        case 'r': //rFlag = true;
-
-            printf("rFlag ON!!\n");
-            d = opendir(".");
-            if (d)
-            {
-                while ((dir = readdir(d)) != NULL)
-                {
-                    printf("%s\n", dir->d_name);
-                }
-                closedir(d);
-            }
+        case 'r':
+            rFlag = true;
             break;
-
-            // case 'h': //hFlag = true;
-            //     printf("hFlag ON!!\n");
-            //     break;
-
-            // case 'o':
-            //     printf("oFlag ON\n");
-            //     break;
+        case 'h':
+            hFlag = true;
+            break;
+        case 'o':
+            oFlag = true;
+            outputFile = optarg;
+            break;
+        case 'v':
+            vFlag = true;
+            break;
+        case 'd':
+            dFlag = true;
+        case '?':
+            fprintf(stderr, "Unrecognized option: -%c\n", optopt);
+            break;
         }
-        printf("Input Size:%d\n", argc);
     }
+
+    if (rFlag == true)
+    {
+        printf("\n......-r INSTRUCTION......\n");
+        d = opendir(inputFile);
+        if (d)
+        {
+            while ((dir = readdir(d)) != NULL)
+            {
+                printf("%s\n", dir->d_name);
+            }
+            closedir(d);
+        }
+    }
+    if (hFlag == true)
+    {
+        printf("\n......-h INSTRUCTION......\n");
+        printf("H\n");
+    }
+    if (oFlag == true)
+    {
+        printf("\n......-o INSTRUCTION......\n");
+        outfile_function(outputFile, inputFile);
+        printf("Copying file %s to:-----> %s \n", inputFile, outputFile);
+    }
+    if (vFlag == true)
+    {
+        printf("\n......-v INSTRUCTION......\n");
+    }
+    if (dFlag == true)
+    {
+        printf("\n......-d INSTRUCTION......\n");
+        printf("Output file : %s\n", outputFile);
+    }
+    printf("\n ............Input Size:%d..............\n", argc);
+
+    //if (S_ISDIR()) // check if is directory
+
+    struct stat fileStat;
+    if (stat(argv[argc - 1], &fileStat) < 0)
+        return 1;
+    printf("Information for %s\n", argv[argc - 1]);
+    printf("---------------------------\n");
+    printf("File Name: \t\t\t %s \n", argv[argc - 1]);
+    get_Type(argv[argc - 1], "file ");
+    printf("File Size: \t\t\t %lld bytes\n", fileStat.st_size);
+    printf("File Permissions: \t\t ");
+    printf((S_ISDIR(fileStat.st_mode)) ? "d" : "-");
+    printf((fileStat.st_mode & S_IRUSR) ? "r" : "-");
+    printf((fileStat.st_mode & S_IWUSR) ? "w" : "-");
+    printf((fileStat.st_mode & S_IXUSR) ? "x" : "-");
+    printf("\n");
+    printf("File created date: \t\t %s", ctime(&fileStat.st_birthtime));
+    printf("File modification date: \t %s ", ctime(&fileStat.st_mtime));
+    printf("\n");
+
     return 0;
 }
