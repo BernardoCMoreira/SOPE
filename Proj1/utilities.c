@@ -61,15 +61,15 @@ void get_Type(char *Name, char *cmnd)
     printf("File Type: \t\t\t%s", x);
 }
 
-void file_Info(char **argv, int argc)
+void file_Info(char *inputFile)
 {
     struct stat fileStat;
-    if (stat(argv[argc - 1], &fileStat) < 0)
+    if (stat(inputFile, &fileStat) < 0)
         return;
-    printf("Information for %s\n", argv[argc - 1]);
     printf("---------------------------\n");
-    printf("File Name: \t\t\t %s \n", argv[argc - 1]);
-    get_Type(argv[argc - 1], "file ");
+    printf("Information for %s\n", inputFile);
+    printf("File Name: \t\t\t %s \n", inputFile);
+    get_Type(inputFile, "file ");
     printf("File Size: \t\t\t %lld bytes\n", fileStat.st_size);
     printf("File Permissions: \t\t ");
     printf((S_ISDIR(fileStat.st_mode)) ? "d" : "-");
@@ -83,7 +83,7 @@ void file_Info(char **argv, int argc)
     char modificationTime[40];
     strftime(modificationTime, 40, "%FT%T", localtime(&fileStat.st_mtime));
     printf("File modification date: \t %s ", modificationTime);
-    printf("\n");
+    printf("\n\n");
 }
 
 int isFile(const char *name)
@@ -104,45 +104,29 @@ int isFile(const char *name)
     return -1;
 }
 
-int checkDirectorys(char *inputFile)
+void checkDirectorys(char *inputFile)
 {
 
-    DIR *dir;
+    DIR *dir = opendir(inputFile);
     struct dirent *ent;
-    if ((dir = opendir(inputFile)) != NULL)
+    char path[1000];
+    if (!dir)
+        return;
+    while ((ent = readdir(dir)) != NULL)
     {
-        /* print all the files and directories within directory */
-        while ((ent = readdir(dir)) != NULL)
+        if (strcmp(ent->d_name, ".") == 0 || strcmp(ent->d_name, "..") == 0 || strcmp(ent->d_name, ".DS_Store") == 0)
         {
-            printf("%s\n", ent->d_name);
-
-            struct stat s;
-            fstat((int)ent->d_name, &s);
-
-            // if ((s.st_mode & S_IFMT) == S_IFDIR)
-            // { //if directory
-            //     //if ()
-            //     //{
-            //     if (fork() == 0)
-            //         checkDirectorys();
-            //     exit(0);
-            //     //}
-            // }
-
-            // if ()
-            // { //normal file
-            //     //print results
-            // }
+            continue;
         }
-        closedir(dir);
+
+        printf("%s\n", ent->d_name);
+        strcpy(path, inputFile);
+        strcat(path, "/");
+        strcat(path, ent->d_name);
+        file_Info(path);
+        checkDirectorys(path);
     }
-    else
-    {
-        /* could not open directory */
-        perror("");
-        return EXIT_FAILURE;
-    }
-    return 0;
+    closedir(dir);
 }
 
 int get_MD5(char *Name, char *cmnd)
@@ -157,7 +141,7 @@ int get_MD5(char *Name, char *cmnd)
     char s[2] = "=";
     x = strtok(buffer, s);
     x = strtok(NULL, s);
-    printf("File MD5 Value: \t\t\t%s", x);
+    printf("File MD5 Value: \t\t\t%s \n\n", x);
 
     return 0;
 }
@@ -173,7 +157,7 @@ int get_SHA1(char *Name, char *cmnd)
     char *x;
     char s[2] = " ";
     x = strtok(buffer, s);
-    printf("File SHA1 Value: \t\t\t %s \n", x);
+    printf("File SHA1 Value: \t\t\t %s \n\n", x);
 
     return 0;
 }
@@ -188,7 +172,7 @@ int get_SHA256(char *Name, char *cmnd)
     char *x;
     char s[2] = " ";
     x = strtok(buffer, s);
-    printf("File SHA256 Value: \t\t\t %s \n", x);
+    printf("File SHA256 Value: \t\t\t %s \n\n", x);
 
     return 0;
 }

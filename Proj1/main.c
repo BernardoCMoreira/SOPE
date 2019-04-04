@@ -72,7 +72,6 @@ int main(int argc, char **argv, char **envp)
     if (hFlag == true)
     {
         printf("\n......-h INSTRUCTION......\n");
-        printf("\n %s \n", hString);
 
         if (strcmp(hString, " md5") == 0)
             md5Flag = true;
@@ -96,7 +95,7 @@ int main(int argc, char **argv, char **envp)
         {
             sha256Flag = true;
         }
-        printf("\n\n%s\n\n", x);
+
         while ((x = strtok(NULL, s)))
         {
             if (strcmp(x, "md5") == 0)
@@ -105,7 +104,6 @@ int main(int argc, char **argv, char **envp)
                 sha1Flag = true;
             else if (strcmp(x, "sha256") == 0)
                 sha256Flag = true;
-            printf("\n\n%s\n\n", x);
         }
     }
     if (oFlag == true)
@@ -113,7 +111,7 @@ int main(int argc, char **argv, char **envp)
         printf("\nData saved on file %s \n", outputFile);
         printf("Execution records saved on file ...\n");
         freopen(outputFile, "w", stdout);
-        file_Info(argv, argc);
+        file_Info(*argv);
     }
 
     if (vFlag == true)
@@ -128,7 +126,7 @@ int main(int argc, char **argv, char **envp)
 
     if (argc == 2)
     {
-        file_Info(argv, argc);
+        file_Info(inputFile);
     }
 
     if (md5Flag)
@@ -148,5 +146,6 @@ int main(int argc, char **argv, char **envp)
         printf("\n.......SHA256FLAG.......\n");
         get_SHA256(argv[argc - 1], "shasum -a 256 ");
     }
+
     return 0;
 }
