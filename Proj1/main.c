@@ -18,25 +18,26 @@ int main(int argc, char **argv, char **envp)
     //Read input from one file, and copy to another!
     int option = 0;
     bool rFlag = false;
-    DIR *d;
-    struct dirent *dir;
+    // DIR *d;
+    // struct dirent *dir;
     bool hFlag = false;
     bool dFlag = false;
-    //bool mda5Flag = false, m1Flag = false, m256Flag = false;
+    bool md5Flag = false, sha1Flag = false, sha256Flag = false;
     bool oFlag = false;
     bool vFlag = false;
     char *inputFile = argv[argc - 1];
     char *outputFile = NULL;
+    char *hString = NULL;
 
-    printf("\n--------------Environment Variables-------------------\n");
+    // printf("\n--------------Environment Variables-------------------\n");
     char **env;
     for (env = envp; *env != 0; env++)
     {
-        char *thisEnv = *env;
-        printf(" %s\n", thisEnv);
+        //char *thisEnv = *env;
+        //printf(" %s\n", thisEnv);
     }
 
-    printf("\n----------------Options--------------------\n");
+    //printf("\n----------------Options--------------------\n");
     while ((option = getopt(argc, argv, "rh:m,1,2o:f:vd")) != -1)
     {
         switch (option)
@@ -46,6 +47,7 @@ int main(int argc, char **argv, char **envp)
             break;
         case 'h':
             hFlag = true;
+            hString = optarg;
             break;
         case 'o':
             oFlag = true;
@@ -65,27 +67,55 @@ int main(int argc, char **argv, char **envp)
     if (rFlag == true)
     {
         printf("\n......-r INSTRUCTION......\n");
-        d = opendir(inputFile);
-        if (d)
-        {
-            while ((dir = readdir(d)) != NULL)
-            {
-                printf("%s\n", dir->d_name);
-            }
-            closedir(d);
-        }
+        checkDirectorys(inputFile);
     }
     if (hFlag == true)
     {
         printf("\n......-h INSTRUCTION......\n");
-        printf("H\n");
+        printf("\n %s \n", hString);
+
+        if (strcmp(hString, " md5") == 0)
+            md5Flag = true;
+        else if (strcmp(hString, " sha1") == 0)
+            sha1Flag = true;
+        else if (strcmp(hString, " sha256") == 0)
+            sha256Flag = true;
+
+        char *x;
+        char s[2] = ",";
+        x = strtok(hString, s);
+        if (strcmp(x, "md5") == 0)
+        {
+            md5Flag = true;
+        }
+        else if (strcmp(x, "sha1") == 0)
+        {
+            sha1Flag = true;
+        }
+        else if (strcmp(x, "sha256") == 0)
+        {
+            sha256Flag = true;
+        }
+        printf("\n\n%s\n\n", x);
+        while ((x = strtok(NULL, s)))
+        {
+            if (strcmp(x, "md5") == 0)
+                md5Flag = true;
+            else if (strcmp(x, "sha1") == 0)
+                sha1Flag = true;
+            else if (strcmp(x, "sha256") == 0)
+                sha256Flag = true;
+            printf("\n\n%s\n\n", x);
+        }
     }
     if (oFlag == true)
     {
-        printf("\n......-o INSTRUCTION......\n");
-        outfile_function(outputFile, inputFile);
-        printf("Copying file %s to:-----> %s \n", inputFile, outputFile);
+        printf("\nData saved on file %s \n", outputFile);
+        printf("Execution records saved on file ...\n");
+        freopen(outputFile, "w", stdout);
+        file_Info(argv, argc);
     }
+
     if (vFlag == true)
     {
         printf("\n......-v INSTRUCTION......\n");
@@ -95,27 +125,28 @@ int main(int argc, char **argv, char **envp)
         printf("\n......-d INSTRUCTION......\n");
         printf("Output file : %s\n", outputFile);
     }
-    printf("\n ............Input Size:%d..............\n", argc);
 
-    //if (S_ISDIR()) // check if is directory
+    if (argc == 2)
+    {
+        file_Info(argv, argc);
+    }
 
-    struct stat fileStat;
-    if (stat(argv[argc - 1], &fileStat) < 0)
-        return 1;
-    printf("Information for %s\n", argv[argc - 1]);
-    printf("---------------------------\n");
-    printf("File Name: \t\t\t %s \n", argv[argc - 1]);
-    get_Type(argv[argc - 1], "file ");
-    printf("File Size: \t\t\t %lld bytes\n", fileStat.st_size);
-    printf("File Permissions: \t\t ");
-    printf((S_ISDIR(fileStat.st_mode)) ? "d" : "-");
-    printf((fileStat.st_mode & S_IRUSR) ? "r" : "-");
-    printf((fileStat.st_mode & S_IWUSR) ? "w" : "-");
-    printf((fileStat.st_mode & S_IXUSR) ? "x" : "-");
-    printf("\n");
-    printf("File created date: \t\t %s", ctime(&fileStat.st_birthtime));
-    printf("File modification date: \t %s ", ctime(&fileStat.st_mtime));
-    printf("\n");
+    if (md5Flag)
+    {
+        printf("\n.......MD5FLAG.......\n");
+        get_MD5(argv[argc - 1], "md5 ");
+    }
 
+    if (sha1Flag)
+    {
+        printf("\n.......SHA1FLAG.......\n");
+        get_SHA1(argv[argc - 1], "shasum -a 1 ");
+    }
+
+    if (sha256Flag)
+    {
+        printf("\n.......SHA256FLAG.......\n");
+        get_SHA256(argv[argc - 1], "shasum -a 256 ");
+    }
     return 0;
 }
