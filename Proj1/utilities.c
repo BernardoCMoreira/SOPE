@@ -10,8 +10,8 @@
 #include <sys/stat.h>
 #include "utilities.h"
 #include <time.h>
-#include <dirent.h>
 #include <errno.h>
+
 int outfile_function(char *readFile, char *writeFile)
 {
     FILE *fp1;
@@ -106,27 +106,43 @@ int isFile(const char *name)
 
 void checkDirectorys(char *inputFile)
 {
-
     DIR *dir = opendir(inputFile);
-    struct dirent *ent;
-    char path[1000];
+    struct dirent *d;
+    char path[2048];
+    strcpy(path, inputFile);
     if (!dir)
         return;
-    while ((ent = readdir(dir)) != NULL)
+
+    while ((d = readdir(dir)) != NULL)
     {
-        if (strcmp(ent->d_name, ".") == 0 || strcmp(ent->d_name, "..") == 0 || strcmp(ent->d_name, ".DS_Store") == 0)
+        if (strcmp(d->d_name, ".") == 0 || strcmp(d->d_name, "..") == 0 || strcmp(d->d_name, ".DS_Store") == 0)
         {
             continue;
         }
+        char pathtemp[4096] = "";
+        struct stat sf;
+        strcat(pathtemp, path);
+        strcat(pathtemp, "/");
+        strcat(pathtemp, d->d_name);
+        stat(pathtemp, &sf);
 
-        printf("%s\n", ent->d_name);
-        strcpy(path, inputFile);
-        strcat(path, "/");
-        strcat(path, ent->d_name);
-        file_Info(path);
-        checkDirectorys(path);
+        if (S_ISDIR(sf.st_mode))
+        {
+
+            pid_t pid;
+
+            if ((pid = fork()) == 0)
+            {
+                checkDirectorys(pathtemp);
+                exit(0);
+            }
+        }
+        else if ((sf.st_mode & S_IFMT) == S_IFREG)
+        {
+            file_Info(pathtemp);
+        }
     }
-    closedir(dir);
+    return;
 }
 
 int get_MD5(char *Name, char *cmnd)
